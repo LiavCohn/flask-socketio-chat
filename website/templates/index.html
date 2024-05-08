@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
+
+<style>
+.chat-container {
+    width: 100%;
+    max-width: 600px; /* Adjust as needed */
+    margin: 20px auto; /* Center the chat container */
+}
+
+.message {
+    display: inline-block;
+    max-width: 80%; /* Limit message width */
+    padding: 5px 15px;
+    margin-bottom: 10px;
+    border-radius: 10px;
+    clear: both;
+}
+
+.sent {
+    background-color: #71cf5e; /* Light green for sent messages */
+    float: right;
+}
+
+.received {
+    background-color: #e1e1e4; /* Light gray for received messages */
+    float: left;
+}
+
+.system {
+    background-color: #E5E5EA;
+    float: right;
+    position: relative;
+    left: -50%; 
+}
+    </style>
+
+<div class="mt-3">
+    <div class="input-group mb-3">
+        <input type="text" class="form-control" id="msgInput" placeholder="Write a message...">
+        <button class="btn btn-outline-secondary" type="button" id="sendBtn">Send</button>
+    </div>
+
+</div>
+<div id="chatDiv" class="chat-container">
+
+</div>
+
+<script src="{{ url_for('static', filename='index.js') }}"></script>
+
+
+{% endblock %}
