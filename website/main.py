@@ -1,9 +1,25 @@
-from flask import Flask, render_template, request, session, redirect, url_for
+from flask import (
+    Flask,
+    render_template,
+    request,
+    session,
+    redirect,
+    url_for,
+    send_from_directory,
+)
+import os
 from flask_socketio import SocketIO, emit
+
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "bla"
+UPLOAD_FOLDER = "/uploads"
+app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+
 socketio = SocketIO(app)
+
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER)
 
 
 @app.route("/login", methods=["GET", "POST"])
@@ -77,6 +93,25 @@ def handle_message(data):
             "client_id": session.get("client_id"),
         },
         broadcast=True,
+    )
+
+
+@socketio.on("upload")
+def handle_upload(data):
+    file = data["file"]
+    filename = data["name"]
+    filepath = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+    with open(filepath, "wb") as f:
+        f.write(file)
+    # Broadcast the URL of the uploaded file to all other users
+    file_url = f"/uploads/{filename}"
+    emit("file_uploaded", {"filename": filename, "file_url": file_url}, broadcast=True)
+
+
+@app.route("/uploads/<path:filename>", methods=["GET", "POST"])
+def download_file(filename):
+    return send_from_directory(
+        app.config["UPLOAD_FOLDER"], filename, as_attachment=True
     )
 
 
