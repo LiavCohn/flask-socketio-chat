@@ -10,13 +10,15 @@ from flask import (
 import os
 from flask_socketio import SocketIO, emit
 
+connected_clients = {}
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "bla"
 UPLOAD_FOLDER = "/uploads"
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
-socketio = SocketIO(app)
+MAX_BUFFER_SIZE = 50 * 1000 * 1000  # 50 MB
+socketio = SocketIO(app, max_http_buffer_size=MAX_BUFFER_SIZE)
 
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
@@ -27,10 +29,7 @@ def login():
     if request.method == "POST":
         username = request.form["username"]
         session["username"] = username
-        socketio.emit(
-            "chat_message",
-            {"sender": "System", "message": f"{username} has logged in"},
-        )
+
         return redirect(url_for("home"))
     return render_template("login.html")
 
@@ -40,11 +39,7 @@ def login():
 def home():
     if "username" not in session:
         return redirect(url_for("login"))
-    usr = session["username"]
-    # socketio.emit(
-    #     "chat_message",
-    #     {"sender": "System", "message": f"{usr} has logged in"},
-    # )
+
     return render_template("index.html", username=session["username"])
 
 
@@ -52,6 +47,25 @@ def home():
 def handle_connect():
     session["client_id"] = request.sid
     emit("connection_response", {"client_id": request.sid})
+
+    if "username" in session:
+        username = session["username"]
+
+        # Add the client ID and username to the dictionary
+        connected_clients[request.sid] = username
+
+        # Get the list of all connected clients except the current one
+        other_clients = [
+            client_id for client_id in connected_clients if client_id != request.sid
+        ]
+
+        # Emit the message to all other connected clients
+        for client_id in other_clients:
+            socketio.emit(
+                "chat_message",
+                {"sender": "System", "message": f"{username} has logged in"},
+                room=client_id,
+            )
 
 
 @app.route("/logout")
@@ -64,6 +78,7 @@ def logout():
         # )
         session.pop("username", None)
         session.pop("client_id", None)
+
     return redirect(url_for("login"))
 
 
@@ -101,10 +116,17 @@ def handle_upload(data):
     file = data["file"]
     filename = data["name"]
     filepath = os.path.join(app.config["UPLOAD_FOLDER"], filename)
-    with open(filepath, "wb") as f:
-        f.write(file)
+    print(filepath)
+    # filepath = f"/uploads/{filename}"
+    try:
+        with open(filepath, "wb") as f:
+            f.write(file)
+    except Exception as e:
+        print("Failed to save file", e)
     # Broadcast the URL of the uploaded file to all other users
     file_url = f"/uploads/{filename}"
+    # file_url = "https://" + request.host + "/uploads/" + filename
+    print(file_url)
     emit("file_uploaded", {"filename": filename, "file_url": file_url}, broadcast=True)
 
 
@@ -116,4 +138,4 @@ def download_file(filename):
 
 
 if __name__ == "__main__":
-    socketio.run(app, debug=True)
+    socketio.run(app, host="0.0.0.0", debug=True)

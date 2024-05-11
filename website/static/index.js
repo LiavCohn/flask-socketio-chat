@@ -1,7 +1,11 @@
 document.addEventListener("DOMContentLoaded", () => {
   let client_id = "";
-  const socket = io();
 
+  // const socket = io();
+  const socket = io(
+    window.location.protocol + "//" + document.domain + ":" + location.port
+  );
+  console.log(window.location.protocol, document.domain, location.port);
   const sendBtn = document.getElementById("sendBtn");
   const msgInput = document.getElementById("msgInput");
   const fileInput = document.getElementById("fileInput");
@@ -69,5 +73,9 @@ document.addEventListener("DOMContentLoaded", () => {
     downloadLink.innerHTML = name;
     downloadDiv.appendChild(downloadLink);
     chatDiv.appendChild(downloadDiv);
+  });
+
+  socket.on("disconnect", () => {
+    socket.close();
   });
 });
