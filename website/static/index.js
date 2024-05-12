@@ -1,11 +1,8 @@
 document.addEventListener("DOMContentLoaded", () => {
   let client_id = "";
 
-  // const socket = io();
-  const socket = io(
-    window.location.protocol + "//" + document.domain + ":" + location.port
-  );
-  console.log(window.location.protocol, document.domain, location.port);
+  const socket = io();
+
   const sendBtn = document.getElementById("sendBtn");
   const msgInput = document.getElementById("msgInput");
   const fileInput = document.getElementById("fileInput");
@@ -49,7 +46,6 @@ document.addEventListener("DOMContentLoaded", () => {
       senderElement.textContent = `${data.sender}`;
       contentElement.textContent = `${data.message}`;
 
-      // chatDiv.appendChild(messageElement);
       messageElement.appendChild(senderElement);
       messageElement.appendChild(contentElement);
       chatDiv.appendChild(messageElement);

@@ -17,8 +17,7 @@ app.config["SECRET_KEY"] = "bla"
 UPLOAD_FOLDER = "/uploads"
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
-MAX_BUFFER_SIZE = 50 * 1000 * 1000  # 50 MB
-socketio = SocketIO(app, max_http_buffer_size=MAX_BUFFER_SIZE)
+socketio = SocketIO(app)
 
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
@@ -71,11 +70,6 @@ def handle_connect():
 @app.route("/logout")
 def logout():
     if "username" in session:
-        username = session["username"]
-        # socketio.emit(
-        #     "chat_message",
-        #     {"sender": "System", "message": f"{username} has logged out"},
-        # )
         session.pop("username", None)
         session.pop("client_id", None)
 
@@ -116,8 +110,7 @@ def handle_upload(data):
     file = data["file"]
     filename = data["name"]
     filepath = os.path.join(app.config["UPLOAD_FOLDER"], filename)
-    print(filepath)
-    # filepath = f"/uploads/{filename}"
+
     try:
         with open(filepath, "wb") as f:
             f.write(file)
@@ -125,8 +118,6 @@ def handle_upload(data):
         print("Failed to save file", e)
     # Broadcast the URL of the uploaded file to all other users
     file_url = f"/uploads/{filename}"
-    # file_url = "https://" + request.host + "/uploads/" + filename
-    print(file_url)
     emit("file_uploaded", {"filename": filename, "file_url": file_url}, broadcast=True)
 
 
