@@ -49,22 +49,11 @@ def handle_connect():
 
     if "username" in session:
         username = session["username"]
-
-        # Add the client ID and username to the dictionary
-        connected_clients[request.sid] = username
-
-        # Get the list of all connected clients except the current one
-        other_clients = [
-            client_id for client_id in connected_clients if client_id != request.sid
-        ]
-
-        # Emit the message to all other connected clients
-        for client_id in other_clients:
-            socketio.emit(
-                "chat_message",
-                {"sender": "System", "message": f"{username} has logged in"},
-                room=client_id,
-            )
+        socketio.emit(
+            "chat_message",
+            {"sender": "System", "message": f"{username} has logged in"},
+            skip_sid=request.sid,
+        )
 
 
 @app.route("/logout")
